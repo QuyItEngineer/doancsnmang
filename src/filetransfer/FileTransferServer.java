@@ -127,10 +127,11 @@ public class FileTransferServer extends Frame{
 //			ServerSocket skObj = new ServerSocket();
 //			String addressIp = skObj.getLocalHost().getHostAddress();
 			InetAddress test = InetAddress.getLocalHost();
-//			InetAddress ip = InetAddress.getByName("192.168.10.48");
-			ServerSocket welcomeSocket = new ServerSocket(intPortNumber,intMaxClients,test);
+			InetAddress ip = InetAddress.getByName("172.16.2.122");
+			ServerSocket welcomeSocket = new ServerSocket(intPortNumber,intMaxClients,ip);
 //			System.out.println("Address: "+test+"....");
 			System.out.println("Address server: "+welcomeSocket.getInetAddress());
+			System.out.println("test.... "+welcomeSocket.getReceiveBufferSize());
 
 			System.out.println("Server started, Waitting Client connect... ");
 			System.out.println("version 0");

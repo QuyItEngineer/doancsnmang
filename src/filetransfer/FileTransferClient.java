@@ -37,10 +37,10 @@ public class FileTransferClient extends Frame{
 	public static void main (String [] args) throws IOException {
 		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 		
-//		System.out.print("Nhap dia chi cua may server de ket noi: ");
-//		System.out.flush();
-//		
-//		strHostAddress = stdin.readLine();
+		System.out.print("Nhap dia chi cua may server de ket noi: ");
+		System.out.flush();
+		
+		strHostAddress = stdin.readLine();
 		
 		System.out.print("Nhap dia chi cong de ket noi voi may server: ");
 		System.out.flush();
@@ -110,7 +110,8 @@ public class FileTransferClient extends Frame{
 		setVisible(true);
 		try {
 			InetAddress test = InetAddress.getLocalHost();
-			clientSocket = new Socket (test,intPortNumber);
+			System.out.println("address: "+strHostAddress);
+			clientSocket = new Socket (strHostAddress,intPortNumber);
 			outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
 			outToServer.flush();
 			inFromServer = new ObjectInputStream(clientSocket.getInputStream());
@@ -210,7 +211,7 @@ public class FileTransferClient extends Frame{
 
 			        System.out.println("Sent " + totalSent + " bytes in "
 			                + (System.currentTimeMillis() - time) + "ms.");
-			        clientSocket.close();
+//			        clientSocket.close();
 			        JOptionPane.showMessageDialog(null,"Ban da gui thanh cong file toi Server","Xac nhan",JOptionPane.INFORMATION_MESSAGE);
 			        
 				} catch (Exception ex) {
