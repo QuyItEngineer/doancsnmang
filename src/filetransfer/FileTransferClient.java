@@ -13,9 +13,12 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Vector;
 
@@ -34,10 +37,10 @@ public class FileTransferClient extends Frame{
 	public static void main (String [] args) throws IOException {
 		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 		
-		System.out.print("Nhap dia chi cua may server de ket noi: ");
-		System.out.flush();
-		
-		strHostAddress = stdin.readLine();
+//		System.out.print("Nhap dia chi cua may server de ket noi: ");
+//		System.out.flush();
+//		
+//		strHostAddress = stdin.readLine();
 		
 		System.out.print("Nhap dia chi cong de ket noi voi may server: ");
 		System.out.flush();
@@ -106,10 +109,12 @@ public class FileTransferClient extends Frame{
 		
 		setVisible(true);
 		try {
-			clientSocket = new Socket (strHostAddress,intPortNumber);
+			InetAddress test = InetAddress.getLocalHost();
+			clientSocket = new Socket (test,intPortNumber);
 			outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
 			outToServer.flush();
 			inFromServer = new ObjectInputStream(clientSocket.getInputStream());
+			System.out.println("Client connected to Server.");
 			int intFlag = 0;
 			
 				while (true) {
@@ -140,7 +145,7 @@ public class FileTransferClient extends Frame{
 						System.out.println("Ten File da gui: "+strFileName);
 						intFlag = 0;
 						JOptionPane.showMessageDialog(this,"Ban dong y nhan file nay tu Server","Thong bao",JOptionPane.INFORMATION_MESSAGE);
-						
+//						clientSocket.close();
 						break;
 					}
 					Thread.yield();
@@ -163,6 +168,7 @@ public class FileTransferClient extends Frame{
 				tfFile.setText(strFilePath);
 				int intIndex = strFilePath.lastIndexOf("\\");
 				strFileName = strFilePath.substring(intIndex+1);
+				System.out.println(strFileName);
 			}
 			if (ae.getSource() == btnSend) {
 				try {
@@ -174,10 +180,42 @@ public class FileTransferClient extends Frame{
 					outToServer.flush();
 					outToServer.writeObject(strFileName);
 					outToServer.flush();
-					outToServer.writeObject(arrByteOfSentFile);
+//					outToServer.writeObject(arrByteOfSentFile);
+//					outToServer.flush();
+					
+					FileInputStream fileInputStream = new FileInputStream(strFilePath);
+					System.out.println(fileInputStream);
+//					outToServer.writeObject("IsFileTransfered");
+//					outToServer.flush();
+					outToServer.writeObject(strFileName);
 					outToServer.flush();
-					JOptionPane.showMessageDialog(null,"Ban da gui thanh cong file toi Server","Xac nhan",JOptionPane.INFORMATION_MESSAGE);
-				} catch (Exception ex) {}
+					
+			        byte [] buffer = new byte[192*1024]; 
+			        int bytesRead = 0;
+			        long totalSent = 0;
+			        long time = System.currentTimeMillis();
+			        OutputStream out = clientSocket.getOutputStream();
+			        System.out.println("01...................00");
+			        while ( (bytesRead = fileInputStream.read(buffer)) != -1)
+			        {
+			            if (bytesRead > 0)
+			            {   System.out.println("01...");
+			                out.write(buffer, 0, bytesRead);
+			                totalSent += bytesRead;
+			                System.out.println("sent " + totalSent);
+			            }   
+			        }
+
+			        
+
+			        System.out.println("Sent " + totalSent + " bytes in "
+			                + (System.currentTimeMillis() - time) + "ms.");
+			        clientSocket.close();
+			        JOptionPane.showMessageDialog(null,"Ban da gui thanh cong file toi Server","Xac nhan",JOptionPane.INFORMATION_MESSAGE);
+			        
+				} catch (Exception ex) {
+					System.out.println(ex);
+				}
 			}
 			if (ae.getSource() == btnReset) {
 				tfFile.setText("");

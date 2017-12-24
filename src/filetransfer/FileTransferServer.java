@@ -10,17 +10,21 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Vector;
 
 import javax.swing.JOptionPane;
@@ -48,6 +52,8 @@ public class FileTransferServer extends Frame{
 		System.out.flush();
 		
 		intMaxClients = Integer.parseInt(stdin.readLine());
+		
+		
 		objFileTransfer = new FileTransferServer();
 	}
 	public Label lblSelectFile;
@@ -118,20 +124,32 @@ public class FileTransferServer extends Frame{
 		vecConnectionSockets = new Vector();
 		
 		try {
-			InetAddress ip = InetAddress.getByName("192.168.1.100");
-			ServerSocket welcomeSocket = new ServerSocket(intPortNumber,intMaxClients,ip);
-			
+//			ServerSocket skObj = new ServerSocket();
+//			String addressIp = skObj.getLocalHost().getHostAddress();
+			InetAddress test = InetAddress.getLocalHost();
+//			InetAddress ip = InetAddress.getByName("192.168.10.48");
+			ServerSocket welcomeSocket = new ServerSocket(intPortNumber,intMaxClients,test);
+//			System.out.println("Address: "+test+"....");
 			System.out.println("Address server: "+welcomeSocket.getInetAddress());
+
+			System.out.println("Server started, Waitting Client connect... ");
+			System.out.println("version 0");
 			while (true) {
-				vecConnectionSockets.addElement(new ThreadedConnectionSocket(welcomeSocket.accept()));
-				Thread.yield();
+				try {
+					System.out.println("version 1");
+					vecConnectionSockets.addElement(new ThreadedConnectionSocket(welcomeSocket.accept()));
+					Thread.yield();
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
 			}
 		} 
 		catch (IOException ioe) {
 			System.out.println(ioe);
+			System.out.println(ioe.getMessage());
 		}
 	}
-	
+
 	public static String showDialog () {
 		FileDialog fd = new FileDialog(new Frame(),"Select File...", FileDialog.LOAD);
 		fd.setVisible(true);
@@ -177,13 +195,17 @@ public class FileTransferServer extends Frame{
 		public Socket connectionSocket;
 		public ObjectInputStream inFromClient;
 		public ObjectOutputStream outToClient;
+		public InputStream inDataFromClient;
 		public ThreadedConnectionSocket (Socket s) {
+			System.out.println("version 2");
 			connectionSocket = s;
 				try {
+					System.out.println("version 3");
 					outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
 					
 					outToClient.flush();
 					inFromClient = new ObjectInputStream(connectionSocket.getInputStream( ));
+					inDataFromClient = connectionSocket.getInputStream( );
 				} catch (Exception e) {
 					System.out.println(e);
 				}
@@ -191,25 +213,30 @@ public class FileTransferServer extends Frame{
 			}
 		
 		public void run () {
+			System.out.println("version 4");
 			try {
+				System.out.println("version 5");
 				int intFlag = 0;
 				String strFileName = "";
 				while (true) {
+					System.out.println("version 6");
 					Object objRecieved = inFromClient.readObject();
-					
+					System.out.println("version 6,.1");
 					switch (intFlag) {
 					case 0:
+						System.out.println("version 7");
 						if (objRecieved.equals("IsFileTransfered")) {
 							intFlag++;
 						}
 						break;
 					case 1:
+						System.out.println("version 8");
 						strFileName = (String) objRecieved;
 						int intOption = JOptionPane.showConfirmDialog(null,connectionSocket.getInetAddress().getHostName()+" dang gui "+strFileName+"!\nBan co chac chan nhan khong?","Thong bao",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
 						
 						System.out.println("\nTen nguon da gui File: "+connectionSocket.getInetAddress().getLocalHost());
 						System.out.println("Dia chi Internet nguon cua File: "+connectionSocket.getInetAddress().getHostAddress());
-						
+						System.out.println("ten file "+strFileName);
 						if (intOption == JOptionPane.YES_OPTION) {
 							intFlag++;
 						} else {
@@ -217,20 +244,42 @@ public class FileTransferServer extends Frame{
 						}
 						break;
 					case 2:
-						byte[] arrByteOfReceivedFile = (byte[])objRecieved;
-						FileOutputStream outToHardDisk = new FileOutputStream(strFileName);
-						outToHardDisk.write(arrByteOfReceivedFile);
-						System.out.println("Ten File da gui: "+strFileName);
-						intFlag = 0;
-						JOptionPane.showMessageDialog(null,"Ban da nhan thanh cong file tu Client","Xac nhan",JOptionPane.INFORMATION_MESSAGE);
+						System.out.println("version 9");
+						try {
+							
+//							 File file = new File("E:/learn/school/semester 7/do an mang/newsource/FileTransfer/");
+//							byte[] arrByteOfReceivedFile = (byte[])objRecieved;
+//							String file = "E:/learn/school/semester 7/do an mang/newsource/FileTransfer/"+strFileName;
+							System.out.println("here");
+							InputStream in = connectionSocket.getInputStream();
+					        FileOutputStream fileOutputStream = new FileOutputStream(strFileName);
+					        System.out.println("here01");
+					        byte [] buffer = new byte[192*1024]; 
+					        int bytesRead = 0;
+
+					        while ( (bytesRead = in.read(buffer)) != -1)
+					            fileOutputStream.write(buffer, 0, bytesRead);
+					        
+					        System.out.println("Ten File da gui: "+strFileName);
+							intFlag = 0;
+							JOptionPane.showMessageDialog(null,"Ban da nhan thanh cong file tu Client","Xac nhan",JOptionPane.INFORMATION_MESSAGE);
+							
+					        connectionSocket.close();
+					        fileOutputStream.close();
+					        
+						    } catch (IOException e) {
+						      e.printStackTrace();
+						    }
+						
 						break;
 					}
 				Thread.yield();
 				}
 			} 
 			catch (Exception e) {
-				System.out.println(e);
+				System.out.println(e.getMessage());
 			}
+			
 		}
 	} 
 	
